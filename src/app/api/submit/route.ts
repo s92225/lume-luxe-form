@@ -149,7 +149,8 @@ export async function POST(request: NextRequest) {
       "",                                           // V: 報價 #2 (empty)
       product.stamp,                                // W: Stamp #1
       "",                                           // X: Stamp #2 (empty)
-      imageFormula,                                 // Y: Signature (=IMAGE formula)
+      signatureUrl,                                 // Y: Signature raw URL (for Make.com)
+      imageFormula,                                 // Z: Signature preview (=IMAGE formula)
     ]);
 
     await sheets.spreadsheets.values.append({

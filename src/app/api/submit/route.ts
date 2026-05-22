@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
       spreadsheetId: sheetId,
       range: "'Form response'!A1",
       valueInputOption: "USER_ENTERED",
-      insertDataOption: "OVERWRITE",
+      insertDataOption: "INSERT_ROWS",
       requestBody: {
         values: rows,
       },

@@ -154,8 +154,9 @@ export async function POST(request: NextRequest) {
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId,
-      range: "'Form response'!A:Y",
+      range: "'Form response'!A1",
       valueInputOption: "USER_ENTERED",
+      insertDataOption: "INSERT_ROWS",
       requestBody: {
         values: rows,
       },

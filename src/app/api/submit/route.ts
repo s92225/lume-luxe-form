@@ -80,6 +80,63 @@ function formatDate(dateStr: string): string {
   return date.toLocaleString("zh-HK", options);
 }
 
+function getHKDatePrefix(): string {
+  const now = new Date();
+  const hk = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Hong_Kong" }));
+  const yy = hk.getFullYear().toString();
+  const mm = (hk.getMonth() + 1).toString().padStart(2, "0");
+  const dd = hk.getDate().toString().padStart(2, "0");
+  return `S${yy}${mm}${dd}`;
+}
+
+async function generateFormId(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  auth: any,
+  sheetId: string
+): Promise<string> {
+  const sheets = google.sheets({ version: "v4", auth });
+  const prefix = getHKDatePrefix();
+
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: sheetId,
+    range: "'Form_Responses'!A:A",
+  });
+
+  const values = res.data.values || [];
+  let count = 0;
+  for (const row of values) {
+    if (row[0] && typeof row[0] === "string" && row[0].startsWith(prefix)) {
+      count++;
+    }
+  }
+
+  const seq = (count + 1).toString().padStart(2, "0");
+  return `${prefix}${seq}`;
+}
+
+function flattenProducts(products: FormData["products"]): string[] {
+  const fields: string[] = [];
+  for (let i = 0; i < 4; i++) {
+    const p = products[i];
+    if (p) {
+      fields.push(
+        p.modelDetails,
+        p.stamp,
+        p.accessories.join(", "),
+        p.receiptType,
+        p.condition,
+        p.conditionDetails.join(", "),
+        p.otherNotes,
+        p.consignmentPrice,
+        p.directBuyPrice
+      );
+    } else {
+      fields.push("", "", "", "", "", "", "", "", "");
+    }
+  }
+  return fields;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: FormData = await request.json();
@@ -123,43 +180,30 @@ export async function POST(request: NextRequest) {
     const timestamp = formatTimestamp();
     const formattedDate = formatDate(body.customer.date);
     const imageFormula = `=IMAGE("${signatureUrl}")`;
+    const formId = await generateFormId(auth, sheetId);
 
-    const rows = body.products.map((product) => [
-      timestamp,                                    // A: 時間戳記
-      body.email,                                   // B: 電郵地址
-      product.modelDetails,                         // C: 型號／尺寸／顏色／皮質／金屬／刻印 #1
-      product.accessories.join(", "),               // D: 配件 #1
-      product.receiptType,                          // E: 其他 #1 [收據]
-      product.condition,                            // F: 商品狀況 #1
-      product.conditionDetails.join(", "),          // G: 商品狀況-2 #1
-      product.otherNotes,                           // H: 其他: #1
-      product.consignmentType,                      // I: 寄賣種類 #1
-      product.price,                                // J: 報價 #1
-      "",                                           // K: 型號／尺寸／顏色／皮質／金屬／刻印 #2 (empty)
-      body.customer.name,                           // L: 姓名
-      body.customer.phone,                          // M: 電話
-      formattedDate,                                // N: 日期
-      "I Agree",                                    // O: T&C Agreement
-      "",                                           // P: 配件 #2 (empty)
-      "",                                           // Q: 其他 #2 [收據] (empty)
-      "",                                           // R: 商品狀況 #2 (empty)
-      "",                                           // S: 商品狀況-2 #2 (empty)
-      "",                                           // T: 其他: #2 (empty)
-      "",                                           // U: 寄賣種類 #2 (empty)
-      "",                                           // V: 報價 #2 (empty)
-      product.stamp,                                // W: Stamp #1
-      "",                                           // X: Stamp #2 (empty)
-      signatureUrl,                                 // Y: Signature raw URL (for Make.com)
-      imageFormula,                                 // Z: Signature preview (=IMAGE formula)
-    ]);
+    const productFields = flattenProducts(body.products);
+
+    const row = [
+      formId,                                       // A: 表格編號
+      timestamp,                                    // B: 時間戳記
+      body.email,                                   // C: 電郵地址
+      body.customer.name,                           // D: 姓名
+      body.customer.phone,                          // E: 電話
+      formattedDate,                                // F: 日期
+      ...productFields,                             // G-AP: p1-p4 (9 fields x 4 products = 36 cols)
+      body.customer.agreement ? "I Agree" : "",     // AQ: agreement
+      signatureUrl,                                 // AR: signature_url
+      imageFormula,                                 // AS: signature_preview
+    ];
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId,
-      range: "'Form response'!A1",
+      range: "'Form_Responses'!A1",
       valueInputOption: "USER_ENTERED",
       insertDataOption: "INSERT_ROWS",
       requestBody: {
-        values: rows,
+        values: [row],
       },
     });
 

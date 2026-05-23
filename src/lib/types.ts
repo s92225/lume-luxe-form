@@ -6,8 +6,8 @@ export interface ProductData {
   condition: string;
   conditionDetails: string[];
   otherNotes: string;
-  consignmentType: string;
-  price: string;
+  consignmentPrice: string;
+  directBuyPrice: string;
 }
 
 export interface CustomerData {
@@ -48,7 +48,6 @@ export const CONDITION_DETAILS_OPTIONS = [
   "染色變色",
 ];
 
-export const CONSIGNMENT_TYPE_OPTIONS = ["寄賣", "直收"];
 
 export const TERMS_AND_CONDITIONS = `1.本人承諾以上商品是原廠正版真品，並仿製品、冒版或侵權產品，並同意如上述商品不通過鑑定，本人需因虛假陳述繳付 HKD600 鑑定費用，或賠償因而導致的損失。
 

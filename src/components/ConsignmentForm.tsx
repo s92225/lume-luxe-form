@@ -21,8 +21,8 @@ const emptyProduct = (): ProductData => ({
   condition: "",
   conditionDetails: [],
   otherNotes: "",
-  consignmentType: "",
-  price: "",
+  consignmentPrice: "",
+  directBuyPrice: "",
 });
 
 const emptyCustomer = (): CustomerData => ({

@@ -12,7 +12,6 @@ import {
   RECEIPT_OPTIONS,
   CONDITION_OPTIONS,
   CONDITION_DETAILS_OPTIONS,
-  CONSIGNMENT_TYPE_OPTIONS,
 } from "@/lib/types";
 
 interface ProductSectionProps {
@@ -178,28 +177,23 @@ export default function ProductSection({
         />
       </div>
 
-      {/* 寄賣種類 */}
-      <div className="space-y-3">
-        <Label className="text-sm font-medium">寄賣種類 #{index + 1}</Label>
-        <RadioGroup
-          value={data.consignmentType}
-          onValueChange={(v) => updateField("consignmentType", v)}
-        >
-          {CONSIGNMENT_TYPE_OPTIONS.map((opt) => (
-            <label key={opt} className="flex items-center gap-2 cursor-pointer">
-              <RadioGroupItem value={opt} />
-              <span className="text-sm">{opt}</span>
-            </label>
-          ))}
-        </RadioGroup>
+      {/* 寄賣價錢 */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">寄賣價錢 #{index + 1}</Label>
+        <Input
+          value={data.consignmentPrice}
+          onChange={(e) => updateField("consignmentPrice", e.target.value)}
+          placeholder="您的答案"
+          className="bg-white"
+        />
       </div>
 
-      {/* 報價 */}
+      {/* 直收價錢 */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">報價 #{index + 1}</Label>
+        <Label className="text-sm font-medium">直收價錢 #{index + 1}</Label>
         <Input
-          value={data.price}
-          onChange={(e) => updateField("price", e.target.value)}
+          value={data.directBuyPrice}
+          onChange={(e) => updateField("directBuyPrice", e.target.value)}
           placeholder="您的答案"
           className="bg-white"
         />

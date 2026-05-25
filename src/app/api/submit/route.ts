@@ -141,23 +141,9 @@ export async function POST(request: NextRequest) {
   try {
     const body: FormData = await request.json();
 
-    if (!body.email || !body.products?.length || !body.customer) {
+    if (!body.products?.length) {
       return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
-
-    if (!body.customer.name || !body.customer.phone || !body.customer.date) {
-      return NextResponse.json(
-        { error: "Missing customer information" },
-        { status: 400 }
-      );
-    }
-
-    if (!body.customer.signatureDataUrl) {
-      return NextResponse.json(
-        { error: "Signature is required" },
+        { error: "At least one product is required" },
         { status: 400 }
       );
     }

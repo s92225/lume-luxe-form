@@ -29,42 +29,39 @@ export default function CustomerSection({ data, onChange }: CustomerSectionProps
       {/* 姓名 */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">
-          姓名 <span className="text-red-500">*</span>
+          姓名
         </Label>
         <Input
           value={data.name}
           onChange={(e) => updateField("name", e.target.value)}
           placeholder="您的答案"
           className="bg-white"
-          required
         />
       </div>
 
       {/* 電話 */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">
-          電話 <span className="text-red-500">*</span>
+          電話
         </Label>
         <Input
           value={data.phone}
           onChange={(e) => updateField("phone", e.target.value)}
           placeholder="E.g. 61112222"
           className="bg-white"
-          required
         />
       </div>
 
       {/* 日期 */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">
-          日期 <span className="text-red-500">*</span>
+          日期
         </Label>
         <Input
           type="date"
           value={data.date}
           onChange={(e) => updateField("date", e.target.value)}
           className="bg-white"
-          required
         />
       </div>
 
@@ -89,7 +86,7 @@ export default function CustomerSection({ data, onChange }: CustomerSectionProps
       {/* Signature */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">
-          簽名 <span className="text-red-500">*</span>
+          簽名
         </Label>
         <p className="text-xs text-[#5f5f5d]">請在下方框內簽名</p>
         <SignaturePad

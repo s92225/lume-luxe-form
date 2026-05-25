@@ -61,46 +61,16 @@ export default function ConsignmentForm() {
   };
 
   const validateEmail = () => {
-    if (!email || !email.includes("@")) {
-      setError("請輸入有效的電郵地址");
-      return false;
-    }
     setError("");
     return true;
   };
 
   const validateProducts = () => {
-    for (let i = 0; i < products.length; i++) {
-      if (!products[i].condition) {
-        setError(`請選擇 Product #${i + 1} 的商品狀況`);
-        return false;
-      }
-    }
     setError("");
     return true;
   };
 
   const validateCustomer = () => {
-    if (!customer.name) {
-      setError("請輸入姓名");
-      return false;
-    }
-    if (!customer.phone) {
-      setError("請輸入電話");
-      return false;
-    }
-    if (!customer.date) {
-      setError("請選擇日期");
-      return false;
-    }
-    if (!customer.agreement) {
-      setError("請同意條款及細則");
-      return false;
-    }
-    if (!customer.signatureDataUrl) {
-      setError("請簽名");
-      return false;
-    }
     setError("");
     return true;
   };
@@ -208,7 +178,7 @@ export default function ConsignmentForm() {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label className="text-sm font-medium">
-              電郵 <span className="text-red-500">*</span>
+              電郵
             </Label>
             <Input
               type="email"
@@ -216,7 +186,6 @@ export default function ConsignmentForm() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
               className="bg-white"
-              required
             />
           </div>
         </div>

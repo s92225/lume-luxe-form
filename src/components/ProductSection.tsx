@@ -132,7 +132,7 @@ export default function ProductSection({
       {/* 商品狀況 */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">
-          商品狀況 #{index + 1} <span className="text-red-500">*</span>
+          商品狀況 #{index + 1}
         </Label>
         <RadioGroup
           value={data.condition}

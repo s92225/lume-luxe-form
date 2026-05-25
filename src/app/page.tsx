@@ -42,7 +42,7 @@ export default function Home() {
               </div>
             )}
           </div>
-          <p className="text-xs text-red-500 mt-3">* 表示必填問題</p>
+          
         </div>
 
         {/* Form */}

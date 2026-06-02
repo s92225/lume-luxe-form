@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { Readable } from "stream";
-import { FormData } from "@/lib/types";
+import { FormData, MAX_PRODUCTS } from "@/lib/types";
 import { getOAuth2Client } from "@/lib/google-auth";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,7 +116,7 @@ async function generateFormId(
 
 function flattenProducts(products: FormData["products"]): string[] {
   const fields: string[] = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < MAX_PRODUCTS; i++) {
     const p = products[i];
     if (p) {
       fields.push(
@@ -177,10 +177,10 @@ export async function POST(request: NextRequest) {
       body.customer.name,                           // D: 姓名
       body.customer.phone,                          // E: 電話
       formattedDate,                                // F: 日期
-      ...productFields,                             // G-AP: p1-p4 (9 fields x 4 products = 36 cols)
-      body.customer.agreement ? "I Agree" : "",     // AQ: agreement
-      signatureUrl,                                 // AR: signature_url
-      imageFormula,                                 // AS: signature_preview
+      ...productFields,                             // G-GD: p1-p20 (9 fields x 20 products = 180 cols)
+      body.customer.agreement ? "I Agree" : "",     // GE: agreement
+      signatureUrl,                                 // GF: signature_url
+      imageFormula,                                 // GG: signature_preview
     ];
 
     await sheets.spreadsheets.values.append({

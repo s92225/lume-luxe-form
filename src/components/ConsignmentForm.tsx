@@ -1,17 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ProductSection from "./ProductSection";
 import CustomerSection from "./CustomerSection";
+import ConfirmationSection from "./ConfirmationSection";
 import {
   FormData,
   ProductData,
   CustomerData,
   MAX_PRODUCTS,
 } from "@/lib/types";
+import { toPng } from "html-to-image";
 
 const emptyProduct = (): ProductData => ({
   modelDetails: "",
@@ -33,7 +35,7 @@ const emptyCustomer = (): CustomerData => ({
   signatureDataUrl: "",
 });
 
-type Step = "email" | "products" | "customer";
+type Step = "email" | "products" | "customer" | "confirm";
 
 export default function ConsignmentForm() {
   const [step, setStep] = useState<Step>("email");
@@ -43,6 +45,8 @@ export default function ConsignmentForm() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [capturing, setCapturing] = useState(false);
+  const confirmRef = useRef<HTMLDivElement>(null);
 
   const handleProductChange = (index: number, data: ProductData) => {
     const updated = [...products];
@@ -80,17 +84,40 @@ export default function ConsignmentForm() {
       if (validateEmail()) setStep("products");
     } else if (step === "products") {
       if (validateProducts()) setStep("customer");
+    } else if (step === "customer") {
+      if (validateCustomer()) setStep("confirm");
     }
   };
 
   const goBack = () => {
     if (step === "products") setStep("email");
     else if (step === "customer") setStep("products");
+    else if (step === "confirm") setStep("customer");
+  };
+
+  const handleScreenshot = async () => {
+    if (!confirmRef.current) return;
+    setCapturing(true);
+    setError("");
+    try {
+      const dataUrl = await toPng(confirmRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: "#ffffff",
+      });
+      const link = document.createElement("a");
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      link.download = `lumeluxe-confirmation-${stamp}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "截圖失敗，請稍後再試");
+    } finally {
+      setCapturing(false);
+    }
   };
 
   const handleSubmit = async () => {
-    if (!validateCustomer()) return;
-
     setSubmitting(true);
     setError("");
 
@@ -141,7 +168,7 @@ export default function ConsignmentForm() {
   return (
     <div className="space-y-6">
       {/* Progress indicator */}
-      <div className="flex items-center gap-2 text-sm text-[#5f5f5d]">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-[#5f5f5d]">
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${
             step === "email"
@@ -170,6 +197,16 @@ export default function ConsignmentForm() {
           }`}
         >
           3. 客戶資料
+        </span>
+        <span className="text-[#eceae4]">→</span>
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium ${
+            step === "confirm"
+              ? "bg-[#1c1c1c] text-[#fcfbf8]"
+              : "bg-[#eceae4] text-[#1c1c1c]"
+          }`}
+        >
+          4. 確認
         </span>
       </div>
 
@@ -227,6 +264,13 @@ export default function ConsignmentForm() {
         </div>
       )}
 
+      {step === "confirm" && (
+        <ConfirmationSection
+          ref={confirmRef}
+          data={{ email, products, customer }}
+        />
+      )}
+
       {/* Error message */}
       {error && (
         <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
@@ -235,7 +279,7 @@ export default function ConsignmentForm() {
       )}
 
       {/* Navigation */}
-      <div className="flex justify-between pt-4">
+      <div className="flex flex-wrap gap-2 justify-between pt-4">
         {step !== "email" ? (
           <Button type="button" variant="outline" onClick={goBack}>
             返回
@@ -244,18 +288,28 @@ export default function ConsignmentForm() {
           <div />
         )}
 
-        {step !== "customer" ? (
+        {step === "confirm" ? (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleScreenshot}
+              disabled={capturing || submitting}
+            >
+              {capturing ? "截圖中..." : "📷 下載截圖"}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="min-w-[100px]"
+            >
+              {submitting ? "提交中..." : "提交"}
+            </Button>
+          </div>
+        ) : (
           <Button type="button" onClick={goNext}>
             下一個
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="min-w-[100px]"
-          >
-            {submitting ? "提交中..." : "提交"}
           </Button>
         )}
       </div>

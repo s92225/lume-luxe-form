@@ -57,4 +57,4 @@ export const TERMS_AND_CONDITIONS = `1.本人承諾以上商品是原廠正版�
 
 4.寄賣人取回寄賣商品時，需當面檢查商品狀態和所屬配件，事後投訴恕不受理。`;
 
-export const MAX_PRODUCTS = 4;
+export const MAX_PRODUCTS = 20;

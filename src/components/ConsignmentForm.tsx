@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +46,7 @@ export default function ConsignmentForm() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [capturing, setCapturing] = useState(false);
+  const [screenshotTaken, setScreenshotTaken] = useState(false);
   const confirmRef = useRef<HTMLDivElement>(null);
 
   const handleProductChange = (index: number, data: ProductData) => {
@@ -75,6 +76,10 @@ export default function ConsignmentForm() {
   };
 
   const validateCustomer = () => {
+    if (!customer.agreement) {
+      setError("請勾選「I Agree」以同意條款");
+      return false;
+    }
     setError("");
     return true;
   };
@@ -92,13 +97,15 @@ export default function ConsignmentForm() {
   const goBack = () => {
     if (step === "products") setStep("email");
     else if (step === "customer") setStep("products");
-    else if (step === "confirm") setStep("customer");
+    else if (step === "confirm") {
+      setStep("customer");
+      setScreenshotTaken(false); // re-capture if data changes and user returns
+    }
   };
 
-  const handleScreenshot = async () => {
+  const captureScreenshot = async () => {
     if (!confirmRef.current) return;
     setCapturing(true);
-    setError("");
     try {
       const dataUrl = await toPng(confirmRef.current, {
         cacheBust: true,
@@ -110,12 +117,25 @@ export default function ConsignmentForm() {
       link.download = `lumeluxe-confirmation-${stamp}.png`;
       link.href = dataUrl;
       link.click();
+      setScreenshotTaken(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "截圖失敗，請稍後再試");
     } finally {
       setCapturing(false);
     }
   };
+
+  // Auto-screenshot once the user lands on the confirmation step
+  useEffect(() => {
+    if (step === "confirm" && !screenshotTaken && !capturing) {
+      // Delay to ensure layout, fonts, and signature image are fully painted
+      const timer = setTimeout(() => {
+        captureScreenshot();
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -156,6 +176,7 @@ export default function ConsignmentForm() {
             setEmail("");
             setProducts([emptyProduct()]);
             setCustomer(emptyCustomer());
+            setScreenshotTaken(false);
           }}
           className="mt-4"
         >
@@ -289,19 +310,18 @@ export default function ConsignmentForm() {
         )}
 
         {step === "confirm" ? (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleScreenshot}
-              disabled={capturing || submitting}
-            >
-              {capturing ? "截圖中..." : "📷 下載截圖"}
-            </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs text-[#5f5f5d]">
+              {capturing
+                ? "📷 正在自動截圖..."
+                : screenshotTaken
+                ? "✓ 已自動下載截圖"
+                : ""}
+            </span>
             <Button
               type="button"
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitting || capturing}
               className="min-w-[100px]"
             >
               {submitting ? "提交中..." : "提交"}

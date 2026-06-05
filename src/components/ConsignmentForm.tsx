@@ -106,11 +106,63 @@ export default function ConsignmentForm() {
   const captureScreenshot = async () => {
     if (!confirmRef.current) return;
     setCapturing(true);
+
+    // Render an off-screen clone at a fixed desktop width so the screenshot
+    // captures the entire confirmation content regardless of the viewport
+    // (mobile or desktop) and is not clipped by overflow-x-auto containers.
+    const CAPTURE_WIDTH = 1024;
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "fixed";
+    wrapper.style.top = "0";
+    wrapper.style.left = "-99999px";
+    // Let the wrapper grow to fit any oversized children (e.g. wide tables)
+    // so nothing is visually clipped before we measure/capture.
+    wrapper.style.width = "max-content";
+    wrapper.style.minWidth = `${CAPTURE_WIDTH}px`;
+    wrapper.style.background = "#ffffff";
+    wrapper.style.pointerEvents = "none";
+    wrapper.style.zIndex = "-1";
+
+    const clone = confirmRef.current.cloneNode(true) as HTMLElement;
+    clone.style.width = "100%";
+    clone.style.maxWidth = "none";
+
+    // Remove horizontal-scroll constraints so wide tables render in full.
+    clone.querySelectorAll<HTMLElement>(".overflow-x-auto").forEach((el) => {
+      el.style.overflow = "visible";
+      el.style.maxWidth = "none";
+      el.style.width = "100%";
+    });
+
+    document.body.appendChild(wrapper);
+    wrapper.appendChild(clone);
+
     try {
-      const dataUrl = await toPng(confirmRef.current, {
+      // Allow layout to settle before measuring/capturing.
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve(null)))
+      );
+
+      // Measure the rendered clone and pad slightly to avoid edge clipping
+      // from sub-pixel rounding.
+      const width = Math.max(
+        clone.scrollWidth,
+        clone.offsetWidth,
+        wrapper.scrollWidth,
+        CAPTURE_WIDTH
+      );
+      const height = Math.max(clone.scrollHeight, clone.offsetHeight);
+
+      const dataUrl = await toPng(clone, {
         cacheBust: true,
         pixelRatio: 2,
         backgroundColor: "#ffffff",
+        width,
+        height,
+        style: {
+          width: `${width}px`,
+          height: `${height}px`,
+        },
       });
       const link = document.createElement("a");
       const stamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -121,6 +173,9 @@ export default function ConsignmentForm() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "截圖失敗，請稍後再試");
     } finally {
+      if (wrapper.parentNode) {
+        wrapper.parentNode.removeChild(wrapper);
+      }
       setCapturing(false);
     }
   };

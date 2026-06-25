@@ -3,6 +3,9 @@ export interface ProductData {
   stamp: string;
   accessories: string[];
   receiptType: string;
+  receiptNoneDetails: string;
+  receiptCountry: string;
+  receiptDate: string;
   condition: string;
   conditionDetails: string[];
   otherNotes: string;
@@ -34,7 +37,7 @@ export const ACCESSORIES_OPTIONS = [
   "證書",
 ];
 
-export const RECEIPT_OPTIONS = ["正本", "官網", "副本"];
+export const RECEIPT_OPTIONS = ["正本", "官網", "副本", "沒有"];
 
 export const CONDITION_OPTIONS = ["全新", "未使用品", "二手"];
 

@@ -11,10 +11,12 @@ export function getOAuth2Client() {
     );
   }
 
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000/api/auth/callback";
+
   const oauth2Client = new google.auth.OAuth2(
     clientId,
     clientSecret,
-    "http://localhost:3000/api/auth/callback"
+    redirectUri
   );
 
   oauth2Client.setCredentials({

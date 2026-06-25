@@ -123,7 +123,13 @@ function flattenProducts(products: FormData["products"]): string[] {
         p.modelDetails,
         p.stamp,
         p.accessories.join(", "),
-        p.receiptType,
+        p.receiptType === "沒有" || p.receiptType === "None"
+          ? p.receiptNoneDetails?.trim()
+            ? `${p.receiptType} (${p.receiptNoneDetails.trim()})`
+            : p.receiptType
+          : p.receiptType,
+        p.receiptCountry,
+        p.receiptDate,
         p.condition,
         p.conditionDetails.join(", "),
         p.otherNotes,
@@ -131,7 +137,7 @@ function flattenProducts(products: FormData["products"]): string[] {
         p.directBuyPrice
       );
     } else {
-      fields.push("", "", "", "", "", "", "", "", "");
+      fields.push("", "", "", "", "", "", "", "", "", "", "");
     }
   }
   return fields;

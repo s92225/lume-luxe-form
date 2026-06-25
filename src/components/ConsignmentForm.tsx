@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import ProductSection from "./ProductSection";
 import CustomerSection from "./CustomerSection";
 import ConfirmationSection from "./ConfirmationSection";
+import { useLang } from "./LanguageProvider";
 import {
   FormData,
   ProductData,
@@ -20,6 +21,9 @@ const emptyProduct = (): ProductData => ({
   stamp: "",
   accessories: [],
   receiptType: "",
+  receiptNoneDetails: "",
+  receiptCountry: "",
+  receiptDate: "",
   condition: "",
   conditionDetails: [],
   otherNotes: "",
@@ -38,6 +42,7 @@ const emptyCustomer = (): CustomerData => ({
 type Step = "email" | "products" | "customer" | "confirm";
 
 export default function ConsignmentForm() {
+  const { t } = useLang();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [products, setProducts] = useState<ProductData[]>([emptyProduct()]);
@@ -66,6 +71,11 @@ export default function ConsignmentForm() {
   };
 
   const validateEmail = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim() || !emailRegex.test(email.trim())) {
+      setError(t.errorEmail);
+      return false;
+    }
     setError("");
     return true;
   };
@@ -77,7 +87,7 @@ export default function ConsignmentForm() {
 
   const validateCustomer = () => {
     if (!customer.agreement) {
-      setError("請勾選「I Agree」以同意條款");
+      setError(t.errorAgree);
       return false;
     }
     setError("");
@@ -171,7 +181,7 @@ export default function ConsignmentForm() {
       link.click();
       setScreenshotTaken(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "截圖失敗，請稍後再試");
+      setError(err instanceof Error ? err.message : t.errorScreenshot);
     } finally {
       if (wrapper.parentNode) {
         wrapper.parentNode.removeChild(wrapper);
@@ -222,8 +232,8 @@ export default function ConsignmentForm() {
     return (
       <div className="text-center space-y-4 py-12">
         <div className="text-4xl">✓</div>
-        <h2 className="text-2xl font-semibold text-[#1c1c1c]">提交成功！</h2>
-        <p className="text-[#5f5f5d]">感謝您的提交，我們會盡快與您聯繫。</p>
+        <h2 className="text-2xl font-semibold text-[#1c1c1c]">{t.successTitle}</h2>
+        <p className="text-[#5f5f5d]">{t.successMsg}</p>
         <Button
           onClick={() => {
             setSubmitted(false);
@@ -235,7 +245,7 @@ export default function ConsignmentForm() {
           }}
           className="mt-4"
         >
-          提交新表格
+          {t.newFormBtn}
         </Button>
       </div>
     );
@@ -252,7 +262,7 @@ export default function ConsignmentForm() {
               : "bg-[#eceae4] text-[#1c1c1c]"
           }`}
         >
-          1. 電郵
+          {t.stepEmail}
         </span>
         <span className="text-[#eceae4]">→</span>
         <span
@@ -262,7 +272,7 @@ export default function ConsignmentForm() {
               : "bg-[#eceae4] text-[#1c1c1c]"
           }`}
         >
-          2. 商品
+          {t.stepProducts}
         </span>
         <span className="text-[#eceae4]">→</span>
         <span
@@ -272,7 +282,7 @@ export default function ConsignmentForm() {
               : "bg-[#eceae4] text-[#1c1c1c]"
           }`}
         >
-          3. 客戶資料
+          {t.stepCustomer}
         </span>
         <span className="text-[#eceae4]">→</span>
         <span
@@ -282,7 +292,7 @@ export default function ConsignmentForm() {
               : "bg-[#eceae4] text-[#1c1c1c]"
           }`}
         >
-          4. 確認
+          {t.stepConfirm}
         </span>
       </div>
 
@@ -291,13 +301,13 @@ export default function ConsignmentForm() {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label className="text-sm font-medium">
-              電郵
+              {t.emailLabel}
             </Label>
             <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
+              placeholder={t.emailPlaceholder}
               className="bg-white"
             />
           </div>
@@ -328,7 +338,7 @@ export default function ConsignmentForm() {
               onClick={addProduct}
               className="w-full border-dashed border-2"
             >
-              + 新增商品 ({products.length}/{MAX_PRODUCTS})
+              {t.addProductBtn} ({products.length}/{MAX_PRODUCTS})
             </Button>
           )}
         </div>
@@ -358,7 +368,7 @@ export default function ConsignmentForm() {
       <div className="flex flex-wrap gap-2 justify-between pt-4">
         {step !== "email" ? (
           <Button type="button" variant="outline" onClick={goBack}>
-            返回
+            {t.backBtn}
           </Button>
         ) : (
           <div />
@@ -368,9 +378,9 @@ export default function ConsignmentForm() {
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-xs text-[#5f5f5d]">
               {capturing
-                ? "📷 正在自動截圖..."
+                ? t.capturingText
                 : screenshotTaken
-                ? "✓ 已自動下載截圖"
+                ? t.screenshotTakenText
                 : ""}
             </span>
             <Button
@@ -379,12 +389,12 @@ export default function ConsignmentForm() {
               disabled={submitting || capturing}
               className="min-w-[100px]"
             >
-              {submitting ? "提交中..." : "提交"}
+              {submitting ? t.submittingBtn : t.submitBtn}
             </Button>
           </div>
         ) : (
           <Button type="button" onClick={goNext}>
-            下一個
+            {t.nextBtn}
           </Button>
         )}
       </div>

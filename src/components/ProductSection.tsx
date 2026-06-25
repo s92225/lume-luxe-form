@@ -8,11 +8,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import {
   ProductData,
-  ACCESSORIES_OPTIONS,
-  RECEIPT_OPTIONS,
-  CONDITION_OPTIONS,
-  CONDITION_DETAILS_OPTIONS,
 } from "@/lib/types";
+import CountrySelect from "./CountrySelect";
+import { useLang } from "./LanguageProvider";
 
 interface ProductSectionProps {
   index: number;
@@ -29,6 +27,7 @@ export default function ProductSection({
   onRemove,
   canRemove,
 }: ProductSectionProps) {
+  const { t } = useLang();
   const updateField = <K extends keyof ProductData>(
     field: K,
     value: ProductData[K]
@@ -51,7 +50,7 @@ export default function ProductSection({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold tracking-tight text-[#1c1c1c]">
-          Product #{index + 1}
+          {t.productTitle} #{index + 1}
         </h2>
         {canRemove && onRemove && (
           <Button
@@ -61,7 +60,7 @@ export default function ProductSection({
             onClick={() => onRemove(index)}
             className="text-red-600 border-red-300 hover:bg-red-50"
           >
-            移除
+            {t.removeBtn}
           </Button>
         )}
       </div>
@@ -69,32 +68,32 @@ export default function ProductSection({
       {/* 型號／尺寸／顏色／皮質／金屬／刻印 */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">
-          型號／尺寸／顏色／皮質／金屬／刻印 #{index + 1}
+          {t.modelDetailsLabel} #{index + 1}
         </Label>
         <Input
           value={data.modelDetails}
           onChange={(e) => updateField("modelDetails", e.target.value)}
-          placeholder="您的答案"
+          placeholder={t.inputPlaceholder}
           className="bg-white"
         />
       </div>
 
       {/* Stamp */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Stamp #{index + 1}</Label>
+        <Label className="text-sm font-medium">{t.stampLabel} #{index + 1}</Label>
         <Input
           value={data.stamp}
           onChange={(e) => updateField("stamp", e.target.value)}
-          placeholder="您的答案"
+          placeholder={t.inputPlaceholder}
           className="bg-white"
         />
       </div>
 
       {/* 配件 */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">配件 #{index + 1}</Label>
+        <Label className="text-sm font-medium">{t.accessoriesLabel} #{index + 1}</Label>
         <div className="grid grid-cols-2 gap-2">
-          {ACCESSORIES_OPTIONS.map((opt) => (
+          {t.accessoriesOptions.map((opt) => (
             <label
               key={opt}
               className="flex items-center gap-2 cursor-pointer"
@@ -112,33 +111,57 @@ export default function ProductSection({
       {/* 收據 */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">
-          其他 #{index + 1}
+          {t.receiptLabel} #{index + 1}
         </Label>
-        <p className="text-xs text-[#5f5f5d]">收據(正本/官網/副本)</p>
+        <p className="text-xs text-[#5f5f5d]">{t.receiptHint}</p>
         <RadioGroup
           value={data.receiptType}
           onValueChange={(v) => updateField("receiptType", v)}
-          className="flex gap-4"
+          className="flex flex-wrap gap-4"
         >
-          {RECEIPT_OPTIONS.map((opt) => (
+          {t.receiptOptions.map((opt) => (
             <label key={opt} className="flex items-center gap-2 cursor-pointer">
               <RadioGroupItem value={opt} />
               <span className="text-sm">{opt}</span>
             </label>
           ))}
         </RadioGroup>
+        {data.receiptType === t.receiptOptions[3] && (
+          <Input
+            value={data.receiptNoneDetails}
+            onChange={(e) => updateField("receiptNoneDetails", e.target.value)}
+            placeholder={t.receiptNonePlaceholder}
+            className="bg-white"
+          />
+        )}
+        {data.receiptType && data.receiptType !== t.receiptOptions[3] && (
+          <div className="space-y-1">
+            <p className="text-xs text-[#5f5f5d]">{t.countryLabel}</p>
+            <CountrySelect
+              value={data.receiptCountry}
+              onChange={(v) => updateField("receiptCountry", v)}
+            />
+            <p className="text-xs text-[#5f5f5d] pt-2">{t.receiptDateLabel}</p>
+            <Input
+              type="date"
+              value={data.receiptDate}
+              onChange={(e) => updateField("receiptDate", e.target.value)}
+              className="bg-white"
+            />
+          </div>
+        )}
       </div>
 
       {/* 商品狀況 */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">
-          商品狀況 #{index + 1}
+          {t.conditionLabel} #{index + 1}
         </Label>
         <RadioGroup
           value={data.condition}
           onValueChange={(v) => updateField("condition", v)}
         >
-          {CONDITION_OPTIONS.map((opt) => (
+          {t.conditionOptions.map((opt) => (
             <label key={opt} className="flex items-center gap-2 cursor-pointer">
               <RadioGroupItem value={opt} />
               <span className="text-sm">{opt}</span>
@@ -149,9 +172,9 @@ export default function ProductSection({
 
       {/* 商品狀況-2 */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">商品狀況-2 #{index + 1}</Label>
+        <Label className="text-sm font-medium">{t.conditionDetailsLabel} #{index + 1}</Label>
         <div className="grid grid-cols-2 gap-2">
-          {CONDITION_DETAILS_OPTIONS.map((opt) => (
+          {t.conditionDetailsOptions.map((opt) => (
             <label
               key={opt}
               className="flex items-center gap-2 cursor-pointer"
@@ -168,33 +191,33 @@ export default function ProductSection({
 
       {/* 其他 */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">其他: #{index + 1}</Label>
+        <Label className="text-sm font-medium">{t.otherLabel} #{index + 1}</Label>
         <Input
           value={data.otherNotes}
           onChange={(e) => updateField("otherNotes", e.target.value)}
-          placeholder="您的答案"
+          placeholder={t.inputPlaceholder}
           className="bg-white"
         />
       </div>
 
       {/* 寄賣價錢 */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">寄賣價錢 #{index + 1}</Label>
+        <Label className="text-sm font-medium">{t.consignmentPriceLabel} #{index + 1}</Label>
         <Input
           value={data.consignmentPrice}
           onChange={(e) => updateField("consignmentPrice", e.target.value)}
-          placeholder="您的答案"
+          placeholder={t.inputPlaceholder}
           className="bg-white"
         />
       </div>
 
       {/* 直收價錢 */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">直收價錢 #{index + 1}</Label>
+        <Label className="text-sm font-medium">{t.directBuyPriceLabel} #{index + 1}</Label>
         <Input
           value={data.directBuyPrice}
           onChange={(e) => updateField("directBuyPrice", e.target.value)}
-          placeholder="您的答案"
+          placeholder={t.inputPlaceholder}
           className="bg-white"
         />
       </div>

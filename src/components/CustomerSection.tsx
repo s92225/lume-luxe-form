@@ -4,8 +4,9 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CustomerData, TERMS_AND_CONDITIONS } from "@/lib/types";
+import { CustomerData } from "@/lib/types";
 import SignaturePad from "./SignaturePad";
+import { useLang } from "./LanguageProvider";
 
 interface CustomerSectionProps {
   data: CustomerData;
@@ -13,6 +14,7 @@ interface CustomerSectionProps {
 }
 
 export default function CustomerSection({ data, onChange }: CustomerSectionProps) {
+  const { t } = useLang();
   const updateField = <K extends keyof CustomerData>(
     field: K,
     value: CustomerData[K]
@@ -23,18 +25,18 @@ export default function CustomerSection({ data, onChange }: CustomerSectionProps
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold tracking-tight text-[#1c1c1c]">
-        客戶資料
+        {t.customerTitle}
       </h2>
 
       {/* 姓名 */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">
-          姓名
+          {t.nameLabel}
         </Label>
         <Input
           value={data.name}
           onChange={(e) => updateField("name", e.target.value)}
-          placeholder="您的答案"
+          placeholder={t.inputPlaceholder}
           className="bg-white"
         />
       </div>
@@ -42,12 +44,12 @@ export default function CustomerSection({ data, onChange }: CustomerSectionProps
       {/* 電話 */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">
-          電話
+          {t.phoneLabel}
         </Label>
         <Input
           value={data.phone}
           onChange={(e) => updateField("phone", e.target.value)}
-          placeholder="E.g. 61112222"
+          placeholder={t.phonePlaceholder}
           className="bg-white"
         />
       </div>
@@ -55,7 +57,7 @@ export default function CustomerSection({ data, onChange }: CustomerSectionProps
       {/* 日期 */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">
-          日期
+          {t.dateLabel}
         </Label>
         <Input
           type="date"
@@ -69,7 +71,7 @@ export default function CustomerSection({ data, onChange }: CustomerSectionProps
       <div className="space-y-3">
         <div className="bg-white border border-[#eceae4] rounded-lg p-4">
           <p className="text-sm text-[#1c1c1c] whitespace-pre-line leading-relaxed">
-            {TERMS_AND_CONDITIONS}
+            {t.terms}
           </p>
         </div>
         <label className="flex items-center gap-2 cursor-pointer">
@@ -79,16 +81,16 @@ export default function CustomerSection({ data, onChange }: CustomerSectionProps
               updateField("agreement", checked === true)
             }
           />
-          <span className="text-sm font-medium">I Agree</span>
+          <span className="text-sm font-medium">{t.agreeLabel}</span>
         </label>
       </div>
 
       {/* Signature */}
       <div className="space-y-2">
         <Label className="text-sm font-medium">
-          簽名
+          {t.signatureLabel}
         </Label>
-        <p className="text-xs text-[#5f5f5d]">請在下方框內簽名</p>
+        <p className="text-xs text-[#5f5f5d]">{t.signatureHint}</p>
         <SignaturePad
           value={data.signatureDataUrl}
           onSignatureChange={(dataUrl) =>

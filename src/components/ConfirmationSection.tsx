@@ -2,6 +2,7 @@
 
 import React, { forwardRef } from "react";
 import { FormData, ProductData } from "@/lib/types";
+import { useLang } from "./LanguageProvider";
 
 interface ConfirmationSectionProps {
   data: FormData;
@@ -23,6 +24,7 @@ const isProductEmpty = (p: ProductData): boolean => {
 
 const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>(
   ({ data }, ref) => {
+    const { t } = useLang();
     const { email, products, customer } = data;
 
     const renderValue = (value: string | string[] | boolean) => {
@@ -30,7 +32,7 @@ const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>
         return value.length > 0 ? value.join("、") : "—";
       }
       if (typeof value === "boolean") {
-        return value ? "是" : "否";
+        return value ? t.yes : t.no;
       }
       return value && value.trim() !== "" ? value : "—";
     };
@@ -46,21 +48,21 @@ const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>
       >
         <div className="space-y-1 border-b border-[#eceae4] pb-4">
           <h2 className="text-2xl font-semibold tracking-tight text-[#1c1c1c]">
-            確認資料
+            {t.confirmTitle}
           </h2>
           <p className="text-sm text-[#5f5f5d]">
-            請檢查以下所有資料，如有需要可返回修改。確認無誤後請按「提交」。
+            {t.confirmSubtitle}
           </p>
         </div>
 
         {/* Email */}
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-[#1c1c1c]">聯絡資料</h3>
+          <h3 className="text-lg font-semibold text-[#1c1c1c]">{t.contactInfoTitle}</h3>
           <table className="w-full text-sm border border-[#eceae4]">
             <tbody>
               <tr className="border-b border-[#eceae4]">
                 <th className="text-left bg-[#f7f5ef] px-3 py-2 w-1/3 font-medium text-[#1c1c1c]">
-                  電郵
+                  {t.emailLabel}
                 </th>
                 <td className="px-3 py-2 text-[#1c1c1c] break-all">
                   {renderValue(email)}
@@ -73,10 +75,10 @@ const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>
         {/* Products */}
         <section className="space-y-3">
           <h3 className="text-lg font-semibold text-[#1c1c1c]">
-            商品 ({filledProducts.length})
+            {t.productsTitle} ({filledProducts.length})
           </h3>
           {filledProducts.length === 0 ? (
-            <p className="text-sm text-[#5f5f5d] italic">未輸入任何商品</p>
+            <p className="text-sm text-[#5f5f5d] italic">{t.noProducts}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-xs border border-[#eceae4] border-collapse">
@@ -86,31 +88,37 @@ const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>
                       #
                     </th>
                     <th className="text-left px-2 py-2 border border-[#eceae4] font-medium text-[#1c1c1c]">
-                      型號／尺寸／顏色／皮質／金屬／刻印
+                      {t.colModel}
                     </th>
                     <th className="text-left px-2 py-2 border border-[#eceae4] font-medium text-[#1c1c1c]">
-                      Stamp
+                      {t.colStamp}
                     </th>
                     <th className="text-left px-2 py-2 border border-[#eceae4] font-medium text-[#1c1c1c]">
-                      配件
+                      {t.colAccessories}
                     </th>
                     <th className="text-left px-2 py-2 border border-[#eceae4] font-medium text-[#1c1c1c]">
-                      收據
+                      {t.colReceipt}
                     </th>
                     <th className="text-left px-2 py-2 border border-[#eceae4] font-medium text-[#1c1c1c]">
-                      狀況
+                      {t.colCountry}
                     </th>
                     <th className="text-left px-2 py-2 border border-[#eceae4] font-medium text-[#1c1c1c]">
-                      狀況-2
+                      {t.colReceiptDate}
                     </th>
                     <th className="text-left px-2 py-2 border border-[#eceae4] font-medium text-[#1c1c1c]">
-                      其他
+                      {t.colCondition}
                     </th>
                     <th className="text-left px-2 py-2 border border-[#eceae4] font-medium text-[#1c1c1c]">
-                      寄賣價
+                      {t.colConditionDetails}
                     </th>
                     <th className="text-left px-2 py-2 border border-[#eceae4] font-medium text-[#1c1c1c]">
-                      直收價
+                      {t.colOther}
+                    </th>
+                    <th className="text-left px-2 py-2 border border-[#eceae4] font-medium text-[#1c1c1c]">
+                      {t.colConsignmentPrice}
+                    </th>
+                    <th className="text-left px-2 py-2 border border-[#eceae4] font-medium text-[#1c1c1c]">
+                      {t.colDirectBuyPrice}
                     </th>
                   </tr>
                 </thead>
@@ -130,7 +138,16 @@ const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>
                         {renderValue(p.accessories)}
                       </td>
                       <td className="px-2 py-2 border border-[#eceae4] text-[#1c1c1c]">
-                        {renderValue(p.receiptType)}
+                        {p.receiptType === t.receiptOptions[3] &&
+                        p.receiptNoneDetails.trim() !== ""
+                          ? `${t.receiptOptions[3]} (${p.receiptNoneDetails})`
+                          : renderValue(p.receiptType)}
+                      </td>
+                      <td className="px-2 py-2 border border-[#eceae4] text-[#1c1c1c]">
+                        {renderValue(p.receiptCountry)}
+                      </td>
+                      <td className="px-2 py-2 border border-[#eceae4] text-[#1c1c1c]">
+                        {renderValue(p.receiptDate)}
                       </td>
                       <td className="px-2 py-2 border border-[#eceae4] text-[#1c1c1c]">
                         {renderValue(p.condition)}
@@ -157,12 +174,12 @@ const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>
 
         {/* Customer */}
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-[#1c1c1c]">客戶資料</h3>
+          <h3 className="text-lg font-semibold text-[#1c1c1c]">{t.customerInfoTitle}</h3>
           <table className="w-full text-sm border border-[#eceae4]">
             <tbody>
               <tr className="border-b border-[#eceae4]">
                 <th className="text-left bg-[#f7f5ef] px-3 py-2 w-1/3 font-medium text-[#1c1c1c]">
-                  姓名
+                  {t.colName}
                 </th>
                 <td className="px-3 py-2 text-[#1c1c1c]">
                   {renderValue(customer.name)}
@@ -170,7 +187,7 @@ const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>
               </tr>
               <tr className="border-b border-[#eceae4]">
                 <th className="text-left bg-[#f7f5ef] px-3 py-2 font-medium text-[#1c1c1c]">
-                  電話
+                  {t.colPhone}
                 </th>
                 <td className="px-3 py-2 text-[#1c1c1c]">
                   {renderValue(customer.phone)}
@@ -178,7 +195,7 @@ const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>
               </tr>
               <tr className="border-b border-[#eceae4]">
                 <th className="text-left bg-[#f7f5ef] px-3 py-2 font-medium text-[#1c1c1c]">
-                  日期
+                  {t.colDate}
                 </th>
                 <td className="px-3 py-2 text-[#1c1c1c]">
                   {renderValue(customer.date)}
@@ -186,7 +203,7 @@ const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>
               </tr>
               <tr className="border-b border-[#eceae4]">
                 <th className="text-left bg-[#f7f5ef] px-3 py-2 font-medium text-[#1c1c1c]">
-                  同意條款
+                  {t.colAgreement}
                 </th>
                 <td className="px-3 py-2 text-[#1c1c1c]">
                   {renderValue(customer.agreement)}
@@ -194,7 +211,7 @@ const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>
               </tr>
               <tr>
                 <th className="text-left bg-[#f7f5ef] px-3 py-2 font-medium text-[#1c1c1c] align-top">
-                  簽名
+                  {t.colSignature}
                 </th>
                 <td className="px-3 py-2">
                   {customer.signatureDataUrl ? (

@@ -58,7 +58,7 @@ function HomeContent() {
         </div>
 
         {/* Form */}
-        <ConsignmentForm />
+        <ConsignmentForm formId={formId} />
       </main>
     </div>
   );

@@ -6,6 +6,7 @@ import { useLang } from "./LanguageProvider";
 
 interface ConfirmationSectionProps {
   data: FormData;
+  formId?: string;
 }
 
 const isProductEmpty = (p: ProductData): boolean => {
@@ -23,7 +24,7 @@ const isProductEmpty = (p: ProductData): boolean => {
 };
 
 const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>(
-  ({ data }, ref) => {
+  ({ data, formId }, ref) => {
     const { t } = useLang();
     const { email, products, customer } = data;
 
@@ -50,6 +51,11 @@ const ConfirmationSection = forwardRef<HTMLDivElement, ConfirmationSectionProps>
           <h2 className="text-2xl font-semibold tracking-tight text-[#1c1c1c]">
             {t.confirmTitle}
           </h2>
+          {formId && (
+            <p className="text-sm font-mono font-medium text-[#1c1c1c]">
+              {formId}
+            </p>
+          )}
           <p className="text-sm text-[#5f5f5d]">
             {t.confirmSubtitle}
           </p>

@@ -41,7 +41,7 @@ const emptyCustomer = (): CustomerData => ({
 
 type Step = "email" | "products" | "customer" | "confirm";
 
-export default function ConsignmentForm() {
+export default function ConsignmentForm({ formId }: { formId: string }) {
   const { t } = useLang();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -49,6 +49,7 @@ export default function ConsignmentForm() {
   const [customer, setCustomer] = useState<CustomerData>(emptyCustomer());
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submittedFormId, setSubmittedFormId] = useState("");
   const [error, setError] = useState("");
   const [capturing, setCapturing] = useState(false);
   const [screenshotTaken, setScreenshotTaken] = useState(false);
@@ -215,11 +216,12 @@ export default function ConsignmentForm() {
         body: JSON.stringify(formData),
       });
 
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || "提交失敗，請稍後再試");
       }
 
+      setSubmittedFormId(data.formId || "");
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "提交失敗，請稍後再試");
@@ -233,10 +235,16 @@ export default function ConsignmentForm() {
       <div className="text-center space-y-4 py-12">
         <div className="text-4xl">✓</div>
         <h2 className="text-2xl font-semibold text-[#1c1c1c]">{t.successTitle}</h2>
+        {submittedFormId && (
+          <p className="text-lg font-mono font-medium text-[#1c1c1c]">
+            {submittedFormId}
+          </p>
+        )}
         <p className="text-[#5f5f5d]">{t.successMsg}</p>
         <Button
           onClick={() => {
             setSubmitted(false);
+            setSubmittedFormId("");
             setStep("email");
             setEmail("");
             setProducts([emptyProduct()]);
@@ -354,6 +362,7 @@ export default function ConsignmentForm() {
         <ConfirmationSection
           ref={confirmRef}
           data={{ email, products, customer }}
+          formId={formId}
         />
       )}
 

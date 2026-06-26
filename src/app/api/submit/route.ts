@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, formId });
   } catch (error) {
     console.error("Form submission error:", error);
     return NextResponse.json(

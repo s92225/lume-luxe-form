@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { Readable } from "stream";
+import { randomUUID } from "crypto";
 import { FormData, MAX_PRODUCTS } from "@/lib/types";
 import { getOAuth2Client } from "@/lib/google-auth";
 
@@ -89,40 +90,52 @@ function getHKDatePrefix(): string {
   return `S${yy}${mm}${dd}`;
 }
 
-async function generateFormIdFromRow(
+// Locate our own row by its unique token and compute the sequential form ID.
+// We identify our row via a UUID token written into column A during the append
+// (instead of trusting append's reported row number, which is unreliable under
+// concurrent appends). The sequence is the count of prefix-matching rows up to
+// and including our row, so it increments correctly and never collides.
+async function resolveFormId(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   auth: any,
   sheetId: string,
-  rowNum: number
-): Promise<string> {
+  token: string,
+  prefix: string
+): Promise<{ formId: string; rowNum: number }> {
   const sheets = google.sheets({ version: "v4", auth });
-  const prefix = getHKDatePrefix();
 
-  // Read column A up to and including our row
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: sheetId,
-    range: `'Form_Responses'!A1:A${rowNum}`,
+    range: "'Form_Responses'!A:A",
   });
 
   const values = res.data.values || [];
+
+  // Find our row by the unique token.
+  let rowNum = -1;
+  for (let i = 0; i < values.length; i++) {
+    if (values[i][0] === token) {
+      rowNum = i + 1; // 1-based row number
+      break;
+    }
+  }
+
+  if (rowNum === -1) {
+    throw new Error("Could not locate appended row by token");
+  }
+
+  // Count prefix-matching rows (finalized IDs and pending tokens) up to and
+  // including our row to determine our sequence number.
   let count = 0;
-  for (const row of values) {
-    if (row[0] && typeof row[0] === "string" && row[0].startsWith(prefix)) {
+  for (let i = 0; i < rowNum; i++) {
+    const val = values[i][0];
+    if (typeof val === "string" && val.startsWith(prefix)) {
       count++;
     }
   }
 
-  // Our row has empty form ID, so count is the number of existing rows with this prefix
-  // Our sequence number is count + 1
-  const seq = (count + 1).toString().padStart(2, "0");
-  return `${prefix}${seq}`;
-}
-
-function parseRowNumFromUpdatedRange(updatedRange: string): number {
-  // updatedRange format: "Form_Responses!A3:GG3"
-  const match = updatedRange.match(/!A(\d+):/);
-  if (!match) throw new Error(`Could not parse row number from updatedRange: ${updatedRange}`);
-  return parseInt(match[1], 10);
+  const seq = count.toString().padStart(2, "0");
+  return { formId: `${prefix}${seq}`, rowNum };
 }
 
 function flattenProducts(products: FormData["products"]): string[] {
@@ -186,9 +199,15 @@ export async function POST(request: NextRequest) {
 
     const productFields = flattenProducts(body.products);
 
-    // Append row with empty form ID first, then generate form ID from row position
+    // Write a unique, prefix-bearing token into column A during the append so we
+    // can reliably locate our own row afterwards (append's reported row number is
+    // unreliable under concurrent submissions). The token starts with the date
+    // prefix so it is counted toward the sequence.
+    const prefix = getHKDatePrefix();
+    const token = `${prefix}#${randomUUID()}`;
+
     const row = [
-      "",                                           // A: 表格編號 (will be updated after append)
+      token,                                        // A: 表格編號 (temporary token, replaced below)
       timestamp,                                    // B: 時間戳記
       body.email,                                   // C: 電郵地址
       body.customer.name,                           // D: 姓名
@@ -200,7 +219,7 @@ export async function POST(request: NextRequest) {
       imageFormula,                                 // GG: signature_preview
     ];
 
-    const appendRes = await sheets.spreadsheets.values.append({
+    await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId,
       range: "'Form_Responses'!A1",
       valueInputOption: "USER_ENTERED",
@@ -210,17 +229,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const updatedRange = appendRes.data.updates?.updatedRange || "";
-    console.log("Append result:", updatedRange);
+    // Locate our row by token and compute the sequential form ID.
+    const { formId, rowNum } = await resolveFormId(auth, sheetId, token, prefix);
 
-    if (!updatedRange) {
-      throw new Error("Failed to append row to Google Sheet");
-    }
-
-    const rowNum = parseRowNumFromUpdatedRange(updatedRange);
-    const formId = await generateFormIdFromRow(auth, sheetId, rowNum);
-
-    // Update the form ID cell
+    // Replace the temporary token with the final form ID.
     await sheets.spreadsheets.values.update({
       spreadsheetId: sheetId,
       range: `'Form_Responses'!A${rowNum}`,

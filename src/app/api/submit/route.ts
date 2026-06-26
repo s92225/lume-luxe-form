@@ -89,17 +89,19 @@ function getHKDatePrefix(): string {
   return `S${yy}${mm}${dd}`;
 }
 
-async function generateFormId(
+async function generateFormIdFromRow(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   auth: any,
-  sheetId: string
+  sheetId: string,
+  rowNum: number
 ): Promise<string> {
   const sheets = google.sheets({ version: "v4", auth });
   const prefix = getHKDatePrefix();
 
+  // Read column A up to and including our row
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: sheetId,
-    range: "'Form_Responses'!A:A",
+    range: `'Form_Responses'!A1:A${rowNum}`,
   });
 
   const values = res.data.values || [];
@@ -110,8 +112,17 @@ async function generateFormId(
     }
   }
 
+  // Our row has empty form ID, so count is the number of existing rows with this prefix
+  // Our sequence number is count + 1
   const seq = (count + 1).toString().padStart(2, "0");
   return `${prefix}${seq}`;
+}
+
+function parseRowNumFromUpdatedRange(updatedRange: string): number {
+  // updatedRange format: "Form_Responses!A3:GG3"
+  const match = updatedRange.match(/!A(\d+):/);
+  if (!match) throw new Error(`Could not parse row number from updatedRange: ${updatedRange}`);
+  return parseInt(match[1], 10);
 }
 
 function flattenProducts(products: FormData["products"]): string[] {
@@ -172,24 +183,24 @@ export async function POST(request: NextRequest) {
     const timestamp = formatTimestamp();
     const formattedDate = formatDate(body.customer.date);
     const imageFormula = `=IMAGE("${signatureUrl}")`;
-    const formId = await generateFormId(auth, sheetId);
 
     const productFields = flattenProducts(body.products);
 
+    // Append row with empty form ID first, then generate form ID from row position
     const row = [
-      formId,                                       // A: 表格編號
+      "",                                           // A: 表格編號 (will be updated after append)
       timestamp,                                    // B: 時間戳記
       body.email,                                   // C: 電郵地址
       body.customer.name,                           // D: 姓名
       body.customer.phone,                          // E: 電話
       formattedDate,                                // F: 日期
-      ...productFields,                             // G-GD: p1-p20 (9 fields x 20 products = 180 cols)
+      ...productFields,                             // G-GD: p1-p20 (11 fields x 20 products = 220 cols)
       body.customer.agreement ? "I Agree" : "",     // GE: agreement
       signatureUrl,                                 // GF: signature_url
       imageFormula,                                 // GG: signature_preview
     ];
 
-    await sheets.spreadsheets.values.append({
+    const appendRes = await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId,
       range: "'Form_Responses'!A1",
       valueInputOption: "USER_ENTERED",
@@ -198,6 +209,28 @@ export async function POST(request: NextRequest) {
         values: [row],
       },
     });
+
+    const updatedRange = appendRes.data.updates?.updatedRange || "";
+    console.log("Append result:", updatedRange);
+
+    if (!updatedRange) {
+      throw new Error("Failed to append row to Google Sheet");
+    }
+
+    const rowNum = parseRowNumFromUpdatedRange(updatedRange);
+    const formId = await generateFormIdFromRow(auth, sheetId, rowNum);
+
+    // Update the form ID cell
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: sheetId,
+      range: `'Form_Responses'!A${rowNum}`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [[formId]],
+      },
+    });
+
+    console.log(`Form submitted: row=${rowNum}, formId=${formId}`);
 
     return NextResponse.json({ success: true, formId });
   } catch (error) {
